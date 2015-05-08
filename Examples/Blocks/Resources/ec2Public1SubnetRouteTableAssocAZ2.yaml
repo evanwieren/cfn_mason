@@ -1,0 +1,9 @@
+---
+ec2Public1SubnetRouteTableAssocAZ2:
+  Type: AWS::EC2::SubnetRouteTableAssociation
+  Condition: Public1AZ2
+  Properties:
+    SubnetId:
+      Ref: ec2Public1SubnetAZ2
+    RouteTableId:
+      Ref: ec2Public1RouteTable

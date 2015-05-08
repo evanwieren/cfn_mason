@@ -1,0 +1,43 @@
+---
+ec2QualysSecurityGroup:
+  Type: AWS::EC2::SecurityGroup
+  Condition: Qualys
+  Properties:
+    GroupDescription: Security group for Qualys.
+    VpcId:
+      Ref: ec2VPC
+    Tags:
+    - Key: Stack
+      Value:
+        Ref: AWS::StackName
+    - Key: Owner
+      Value:
+        Ref: kOwnerService
+    - Key: Env
+      Value:
+        Ref: lStackEnv
+    - Key: Name
+      Value:
+        Fn::Join:
+        - "-"
+        - - Ref: kOwnerService
+          - Ref: lStackEnv
+          - qualys-sg
+          - Fn::FindInMap:
+            - RegionMap
+            - Ref: AWS::Region
+            - AbbrRegion
+    SecurityGroupIngress:
+    - IpProtocol: "-1"
+      CidrIp:
+        Fn::FindInMap:
+        - QualysMap
+        - Ref: AWS::Region
+        - Subnet
+    SecurityGroupEgress:
+    - IpProtocol: "-1"
+      CidrIp:
+        Fn::FindInMap:
+        - QualysMap
+        - Ref: AWS::Region
+        - Subnet

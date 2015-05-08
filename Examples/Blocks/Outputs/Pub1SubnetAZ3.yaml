@@ -1,0 +1,12 @@
+---
+Pub1SubnetAZ3:
+  Condition: Public1AZ3
+  Description: Public Subnet Id for AZ3
+  Value:
+    Fn::Join:
+    - " "
+    - - Ref: ec2Public1SubnetAZ3
+      - in
+      - Fn::GetAtt:
+        - ec2Public1SubnetAZ3
+        - AvailabilityZone

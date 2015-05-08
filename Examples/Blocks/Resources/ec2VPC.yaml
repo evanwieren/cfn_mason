@@ -1,0 +1,30 @@
+---
+ec2VPC:
+  Type: AWS::EC2::VPC
+  Properties:
+    CidrBlock:
+      Ref: aVPCCIDRBlock
+    EnableDnsSupport: 'true'
+    EnableDnsHostnames: 'true'
+    InstanceTenancy: default
+    Tags:
+    - Key: Stack
+      Value:
+        Ref: AWS::StackName
+    - Key: Owner
+      Value:
+        Ref: kOwnerService
+    - Key: Env
+      Value:
+        Ref: lStackEnv
+    - Key: Name
+      Value:
+        Fn::Join:
+        - "-"
+        - - Ref: kOwnerService
+          - Ref: lStackEnv
+          - vpc
+          - Fn::FindInMap:
+            - RegionMap
+            - Ref: AWS::Region
+            - AbbrRegion

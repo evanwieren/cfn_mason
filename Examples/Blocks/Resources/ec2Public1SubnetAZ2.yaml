@@ -1,0 +1,34 @@
+---
+ec2Public1SubnetAZ2:
+  Type: AWS::EC2::Subnet
+  Condition: Public1AZ2
+  Properties:
+    VpcId:
+      Ref: ec2VPC
+    CidrBlock:
+      Ref: cPublic1SubnetAZ2
+    AvailabilityZone:
+      Fn::Select:
+      - '1'
+      - Fn::GetAZs: ''
+    Tags:
+    - Key: Stack
+      Value:
+        Ref: AWS::StackName
+    - Key: Owner
+      Value:
+        Ref: kOwnerService
+    - Key: Env
+      Value:
+        Ref: lStackEnv
+    - Key: Name
+      Value:
+        Fn::Join:
+        - "-"
+        - - Ref: kOwnerService
+          - Ref: lStackEnv
+          - public1-subnet2
+          - Fn::FindInMap:
+            - RegionMap
+            - Ref: AWS::Region
+            - AbbrRegion

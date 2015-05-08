@@ -1,0 +1,8 @@
+---
+kOwnerService:
+  Type: String
+  Default: cloudeng
+  Description: Owner or service name. (For tagging, use lowercase, no spaces, dashes
+    ok.)
+  AllowedPattern: "[-a-z0-9]*"
+  ConstraintDescription: Must be lowercase, no spaces, dashes ok.

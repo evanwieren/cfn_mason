@@ -1,0 +1,10 @@
+---
+ec2Pri1DefaultRoute:
+  Type: AWS::EC2::Route
+  Condition: AnyPrivate1Subnet
+  Properties:
+    RouteTableId:
+      Ref: ec2Private1RouteTable
+    DestinationCidrBlock: 0.0.0.0/0
+    GatewayId:
+      Ref: ec2InternetGW

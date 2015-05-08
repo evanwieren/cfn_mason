@@ -1,0 +1,34 @@
+---
+ec2Private1SubnetAZ3:
+  Type: AWS::EC2::Subnet
+  Condition: Private1AZ3
+  Properties:
+    VpcId:
+      Ref: ec2VPC
+    CidrBlock:
+      Ref: gPrivate1SubnetAZ3
+    AvailabilityZone:
+      Fn::Select:
+      - '2'
+      - Fn::GetAZs: ''
+    Tags:
+    - Key: Stack
+      Value:
+        Ref: AWS::StackName
+    - Key: Owner
+      Value:
+        Ref: kOwnerService
+    - Key: Env
+      Value:
+        Ref: lStackEnv
+    - Key: Name
+      Value:
+        Fn::Join:
+        - "-"
+        - - Ref: kOwnerService
+          - Ref: lStackEnv
+          - private1-subnet3
+          - Fn::FindInMap:
+            - RegionMap
+            - Ref: AWS::Region
+            - AbbrRegion

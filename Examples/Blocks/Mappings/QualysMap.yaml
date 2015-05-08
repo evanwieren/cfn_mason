@@ -1,0 +1,20 @@
+---
+QualysMap:
+  us-east-1:
+    Subnet: 10.248.68.0/24
+  eu-west-1:
+    Subnet: 10.248.132.0/24
+  ap-northeast-1:
+    Subnet: 10.248.196.0/24
+  us-west-1:
+    Subnet: n/a
+  us-west-2:
+    Subnet: 10.248.4.0/24
+  ap-southeast-1:
+    Subnet: n/a
+  ap-southeast-2:
+    Subnet: n/a
+  sa-east-1:
+    Subnet: n/a
+  eu-central-1:
+    Subnet: n/a

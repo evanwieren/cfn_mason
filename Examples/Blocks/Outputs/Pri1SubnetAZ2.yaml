@@ -1,0 +1,12 @@
+---
+Pri1SubnetAZ2:
+  Condition: Private1AZ2
+  Description: Private Subnet Id for AZ2
+  Value:
+    Fn::Join:
+    - " "
+    - - Ref: ec2Private1SubnetAZ2
+      - in
+      - Fn::GetAtt:
+        - ec2Private1SubnetAZ2
+        - AvailabilityZone

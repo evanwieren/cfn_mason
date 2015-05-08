@@ -1,0 +1,15 @@
+---
+ec2Private1SubnetAclEntryOut300:
+  Type: AWS::EC2::NetworkAclEntry
+  Condition: AnyPrivate1Subnet
+  Properties:
+    NetworkAclId:
+      Ref: ec2Private1SubnetNetworkAcl
+    RuleNumber: '300'
+    Protocol: '6'
+    PortRange:
+      From: '80'
+      To: '80'
+    RuleAction: allow
+    Egress: 'true'
+    CidrBlock: 0.0.0.0/0
