@@ -50,7 +50,13 @@ main do
 
   results = JSON.dump(cfn)
 
-  puts JSON.pretty_generate(JSON.parse(results))
+  if options['output-file']
+    template_file = File.open(options['output-file'], 'w')
+
+    template_file.write(JSON.pretty_generate(JSON.parse(results)))
+  else
+    puts JSON.pretty_generate(JSON.parse(results))
+  end
 
 end
 
@@ -74,7 +80,7 @@ description 'Convert SpecFile and blocks into a Cloudformation file to use with 
 on("-v", "--verbose","Verbose Messaging")
 on("-i INPUT_SPEC_FILE","--input-specfile INPUT_SPEC_FILE","Input Cloud Formation SpecFile")
 on("-o OUTPUT_FILE", "--output-file OUTPUT_FILE", "Output file for Cloud Formation Template")
-options['output-file'] = Dir.pwd + "/cloudformation.template"
+#options['output-file'] = Dir.pwd + "/cloudformation.template"
 on("-b BLOCKS_DIRECTORY", "--blocks-dir BLOCKS_DIRECTORY", "Directory containing building blocks for CFN")
 options['name'] = "specfile.yaml"
 #on("-i INPUT_CFN_FILE","--input-cfn-file","Input Cloud Formation File",/^\d+\.\d+\.\d+\.\d+$/)
