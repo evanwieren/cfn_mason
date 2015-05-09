@@ -22,17 +22,53 @@ main do
     logger.level = Logger::WARN
   end
 
+  # Create a hash to hold all of the data as we build the CFN
+  cfn = Hash.new
+
   specfile = YAML::load(File.open(options['input-specfile']))
   logger.info("Read in the specfile from #{options['input-specfile']}")
-  puts specfile['Parameters']
-  puts specfile['Parameters'].class
+  # puts specfile['Parameters']
+  # specfile['Parameters'].each_key do |param|
+  #   puts "Param = #{param}"
+  # end
+
+  ['AWSTemplateFormatVersion', 'Description'].each do |meta_data|
+    unless specfile[meta_data].length == 1
+      puts 'Houston we have a problem'
+      exit(1)
+    end
+    cfn[meta_data] = specfile[meta_data][0]
+  end
+
+
+  ['Parameters', 'Mappings', 'Resources', 'Outputs'].each do |section|
+
+    cfn[section] = Hash.new
+    parse_cfn_blocks(options['blocks-dir'] + "/#{section}", section, cfn)
+
+  end
+
+  results = JSON.dump(cfn)
+
+  puts JSON.pretty_generate(JSON.parse(results))
 
 end
 
-def parse_block_directory
+# Pre: Directory full of 'yml' or 'yaml' files
+# Read and add to given hash
+def parse_cfn_blocks(directory, section, cfn_hash)
+  Dir.glob(directory +'/*.yaml') do |yaml_file|
+    # do work on files ending in .rb in the desired directory
+    item = YAML::load(File.open(yaml_file))
+    item.each_key do |key|
+      cfn_hash[section][key] = Hash.new
+      cfn_hash[section][key] = item[key]
+    end
+  end
+end
 
 version     '0.0.2'
-description 'Break down Cloud Formation Template into Builing Blocks'
+description 'Convert SpecFile and blocks into a Cloudformation file to use with AWS'
 #arg         :some_arg, :required
 
 on("-v", "--verbose","Verbose Messaging")

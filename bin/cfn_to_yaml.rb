@@ -35,6 +35,9 @@ main do
   cloudformation = JSON.parse(file)
 
   spec_hash = Hash.new
+  spec_hash['AWSTemplateFormatVersion'] = [cloudformation['AWSTemplateFormatVersion']]
+  spec_hash['Description'] = [cloudformation['Description']]
+
 # This works to create a bunch of small yaml files.
 # Can use this to break down/out a cloudformation stack.
   sections = ['Parameters', 'Mappings', 'Resources', 'Outputs']
@@ -50,6 +53,7 @@ main do
       logger.debug("Created the following directory: #{data_dir}")
     end
 
+    # Create the file and write the data to it.
     my_hash = Hash.new
     count = 0
     cloudformation[cf_key].each_key do |key|
@@ -59,6 +63,7 @@ main do
       my_hash[count] = Hash.new
       my_hash[count][key] = cloudformation[cf_key][key]
       output_file.write(my_hash[count].to_yaml)
+
       #puts my_hash[count].to_yaml
       # count = count + 1
       output_file.close
