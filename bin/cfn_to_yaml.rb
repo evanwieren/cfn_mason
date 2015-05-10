@@ -44,7 +44,7 @@ main do
   sections.each do |cf_key|
 
     if cloudformation.has_key?(cf_key)
-      
+
       data_dir = output_dir + "/#{cf_key.to_s}"
       spec_hash[cf_key] = Array.new
 
