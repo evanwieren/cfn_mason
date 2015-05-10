@@ -1,4 +1,9 @@
 ---
+AWSTemplateFormatVersion:
+- '2010-09-09'
+Description:
+- Cloud Ops VPC Architecture template. Creates a VPC in 1-3 availability-zones, 1-9
+  subnets.
 Parameters:
 - aVPCCIDRBlock
 - bPublic1SubnetAZ1

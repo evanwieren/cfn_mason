@@ -42,31 +42,35 @@ main do
 # Can use this to break down/out a cloudformation stack.
   sections = ['Parameters', 'Mappings', 'Resources', 'Outputs']
   sections.each do |cf_key|
-  # cloudformation.each_key do |cf_key|
-    data_dir = output_dir + "/#{cf_key.to_s}"
-    spec_hash[cf_key] = Array.new
 
-    # On a mac case is ignored. This can be dangerous
-    unless Dir.exists? (data_dir)
-      logger.debug("Creating directory: #{data_dir}")
-      FileUtils.mkdir(data_dir)
-      logger.debug("Created the following directory: #{data_dir}")
-    end
+    if cloudformation.has_key?(cf_key)
+      
+      data_dir = output_dir + "/#{cf_key.to_s}"
+      spec_hash[cf_key] = Array.new
 
-    # Create the file and write the data to it.
-    my_hash = Hash.new
-    count = 0
-    cloudformation[cf_key].each_key do |key|
-      spec_hash[cf_key].push(key)
-      logger.debug("Creating YAML for Section: #{cf_key.to_s} and Ojbect: #{key.to_s}")
-      output_file = File.open("#{data_dir}/#{key.to_s}.yaml", 'w')
-      my_hash[count] = Hash.new
-      my_hash[count][key] = cloudformation[cf_key][key]
-      output_file.write(my_hash[count].to_yaml)
+      # On a mac case is ignored. This can be dangerous
+      unless Dir.exists? (data_dir)
+        logger.debug("Creating directory: #{data_dir}")
+        FileUtils.mkdir(data_dir)
+        logger.debug("Created the following directory: #{data_dir}")
+      end
 
-      #puts my_hash[count].to_yaml
-      # count = count + 1
-      output_file.close
+      # Create the file and write the data to it.
+      my_hash = Hash.new
+      count = 0
+      cloudformation[cf_key].each_key do |key|
+        spec_hash[cf_key].push(key)
+        logger.debug("Creating YAML for Section: #{cf_key.to_s} and Ojbect: #{key.to_s}")
+        output_file = File.open("#{data_dir}/#{key.to_s}.yaml", 'w')
+        my_hash[count] = Hash.new
+        my_hash[count][key] = cloudformation[cf_key][key]
+        output_file.write(my_hash[count].to_yaml)
+
+        #puts my_hash[count].to_yaml
+        # count = count + 1
+        output_file.close
+      end
+
     end
   end
 
