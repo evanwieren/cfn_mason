@@ -24,6 +24,12 @@ main do
   end
 
   puts " I need to add a bunch of code."
+  # TODO: Whole list of things. Lets walk through them.
+  # Read config file.
+  #   -- Do a whole bunch of magic with that.
+  #   --  Create prereq cfn stacks
+  #   -- add an input variable file
+
 
 end
 
