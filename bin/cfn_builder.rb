@@ -38,7 +38,7 @@ main do
     cfn[meta_data] = specfile[meta_data][0]
   end
 
-  ['Parameters', 'Mappings', 'Resources', 'Outputs'].each do |section|
+  ['Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs'].each do |section|
 
     parse_cfn_blocks(options['blocks-dir'] + "/#{section}", section, specfile, cfn)
 
