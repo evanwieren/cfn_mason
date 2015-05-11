@@ -40,7 +40,7 @@ main do
 
 # This works to create a bunch of small yaml files.
 # Can use this to break down/out a cloudformation stack.
-  sections = ['Parameters', 'Mappings', 'Resources', 'Outputs']
+  sections = ['Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs']
   sections.each do |cf_key|
 
     if cloudformation.has_key?(cf_key)
