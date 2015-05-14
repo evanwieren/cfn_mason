@@ -1,0 +1,25 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    aws-sdk (2.0.42)
+      aws-sdk-resources (= 2.0.42)
+    aws-sdk-core (2.0.42)
+      builder (~> 3.0)
+      jmespath (~> 1.0)
+      multi_json (~> 1.0)
+    aws-sdk-resources (2.0.42)
+      aws-sdk-core (= 2.0.42)
+    builder (3.2.2)
+    inifile (3.0.0)
+    jmespath (1.0.2)
+      multi_json (~> 1.0)
+    multi_json (1.11.0)
+    trollop (2.1.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  aws-sdk (~> 2.0.42)
+  inifile (~> 3.0.0)
+  trollop (~> 2.1.2)
