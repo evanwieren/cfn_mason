@@ -47,33 +47,57 @@ def list(global_opts, cmd_opts)
   end
 end
 
+# Simple function to read in the config to a hash
 def read_config( config_file )
-  return "foobar"
+  return IniFile.load(config_file)
+end
+
+# Parse config to find all the inputs. This will read the global section.
+# Todo: parse globals.
+# todo: parse params
+# todo: validate_actual params
+def parse_params( environment, config , cfn_template)
+  parameters = Array.new
+
+  if cfn_template.has_key?('Parameters')
+    cfn_template['Parameters'].each_key do |key|
+      parameters.push(key)
+
+    end
+  end
+
+  count = 0
+  # config[environment].each_key do |key|
+  parameters.each do |key|
+    # config[environment].each_key do |key|
+    if config[environment].has_key?(key)
+      parameters[count] = Hash.new
+      parameters[count][:parameter_key] = key
+      parameters[count][:parameter_value] = config[environment][key]
+      count = count +1
+    elsif config['global'].has_key?(key)
+      parameters[count] = Hash.new
+      parameters[count][:parameter_key] = key
+      parameters[count][:parameter_value] = config['global'][key]
+      count = count +1
+    end
+  end
+  return parameters
 end
 
 def create(global_opts, cmd_opts)
   creds = get_aws_creds( global_opts )
+  config = read_config(global_opts[:config])
   cloudformation = File.read(cmd_opts[:cfn])
-  #cloudformation = JSON.parse(file)
+  cfn_hash = JSON.parse(cloudformation)
   cmd_opts[:region] ? region = cmd_opts[:region] : region = 'us-east-1'
-  cmd_opts[:config] ? params = read_config(cmd_opts[:config]) : params = Hash.new
+  global_opts[:config] ? params = parse_params(cmd_opts[:environment], config, cfn_hash) : params = Array.new
   cfn = get_cfn(creds, region)
   resp = cfn.create_stack(
       # required
       stack_name: cmd_opts[:stack], # passed from command line.
       template_body: cloudformation, # read this from file.
-      # template_url: "TemplateURL", # Use this is template is in public S3 Bucket
-
-      # Todo: pass in parameters
-      # This can be empty. So can pass in an empty variable
-      parameters: [ params ],
-      # parameters: [ # read these from a file
-      #     {
-      #         parameter_key: "ParameterKey",
-      #         parameter_value: "ParameterValue",
-      #         use_previous_value: true,
-      #     },
-      # ],
+      parameters: params ,
       disable_rollback: true, # I like this.
       timeout_in_minutes: 15,  # should bump this up to 15
       #notification_arns: ["NotificationARN", '...'],
@@ -81,12 +105,12 @@ def create(global_opts, cmd_opts)
       #on_failure: "DO_NOTHING", #"DO_NOTHING|ROLLBACK|DELETE",
       # stack_policy_body: "StackPolicyBody",
       # stack_policy_url: "StackPolicyURL",
-      tags: [
-          {
-              key: "TagKey",
-              value: "TagValue",
-          },
-      ],
+      # tags: [
+      #     {
+      #         key: "TagKey",
+      #         value: "TagValue",
+      #     },
+      # ],
   )
   puts "Create all the things."
 end
@@ -107,6 +131,7 @@ where [options] are:
     opt :dry_run, "Don't actually do anything", :short => "-n"
     opt :aws_env_key, "Which environment to us if using aws shared creds", short: '-a', type: :string
     opt :verbose, short: '-v'
+    opt :config, "Environment configuration file", type: :string # todo: replace the stuff below with this
     opt :version
     stop_on SUB_COMMANDS
   end
@@ -122,10 +147,10 @@ Usage:
      cfnmason create -c environment_config -s stack_name
 where [options] are:
                    EOS
-                   opt :config, "Environment configuration file", type: :string # todo: replace the stuff below with this
                    opt :stack, "Stack to be created on AWS", required: true, type: :string
                    opt :region, "Region to deplay stack", short: '-r', type: :string
                    opt :cfn, "Cloud Formation Template", type: :string
+                   opt :environment, "dev, qa, stage, prod", type: :string, short: '-e'
                  end
                when "delete"  # needs to be done
                  Trollop::options do
