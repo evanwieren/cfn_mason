@@ -98,6 +98,11 @@ def parse_params( environment, config , cfn_template)
   return parameters
 end
 
+def generate_stack_name(config, stackname)
+  # puts "This will genenerate the stack name with some magic."
+  return stackname
+end
+
 def create(global_opts, cmd_opts)
   creds = get_aws_creds( global_opts )
   config = read_config(global_opts[:config])
@@ -106,7 +111,8 @@ def create(global_opts, cmd_opts)
   cmd_opts[:region] ? region = cmd_opts[:region] : config['global'].has_key?('region') ? region = config['global']['region'] : region = 'us-east-1'
   global_opts[:config] ? params = parse_params(cmd_opts[:environment], config, cfn_hash) : params = Array.new
   cfn = get_cfn(creds, region)
-  stack_name = "#{config['global']['ProductCode']}-#{cmd_opts[:environment]}-#{cmd_opts[:stack]}"
+  # stack_name = cmd_opts[:stack]
+  stack_name = generate_stack_name(config, cmd_opts[:stack])
   resp = cfn.create_stack(
       # required
       stack_name: stack_name, # passed from command line.
