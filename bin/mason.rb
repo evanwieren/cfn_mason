@@ -47,6 +47,19 @@ def list(global_opts, cmd_opts)
   end
 end
 
+def outputs(global_opts, cmd_opts)
+  creds = get_aws_creds( global_opts )
+  cmd_opts[:region] ? region = cmd_opts[:region] : region = 'us-east-1'
+  cfn = get_cfn(creds, region)
+  cfn_resource = Aws::CloudFormation::Resource.new(client: cfn)
+
+  stack = cfn_resource.stack(cmd_opts[:stack])
+  stack.outputs.each do |output|
+    puts "Name #{output.output_key} and value = #{output.output_value}"
+  end
+end
+
+
 # Simple function to read in the config to a hash
 def read_config( config_file )
   return IniFile.load(config_file)
@@ -90,12 +103,13 @@ def create(global_opts, cmd_opts)
   config = read_config(global_opts[:config])
   cloudformation = File.read(cmd_opts[:cfn])
   cfn_hash = JSON.parse(cloudformation)
-  cmd_opts[:region] ? region = cmd_opts[:region] : region = 'us-east-1'
+  cmd_opts[:region] ? region = cmd_opts[:region] : config['global'].has_key?('region') ? region = config['global']['region'] : region = 'us-east-1'
   global_opts[:config] ? params = parse_params(cmd_opts[:environment], config, cfn_hash) : params = Array.new
   cfn = get_cfn(creds, region)
+  stack_name = "#{config['global']['ProductCode']}-#{cmd_opts[:environment]}-#{cmd_opts[:stack]}"
   resp = cfn.create_stack(
       # required
-      stack_name: cmd_opts[:stack], # passed from command line.
+      stack_name: stack_name, # passed from command line.
       template_body: cloudformation, # read this from file.
       parameters: params ,
       disable_rollback: true, # I like this.
@@ -116,7 +130,7 @@ def create(global_opts, cmd_opts)
 end
 
 if __FILE__ == $0
-  SUB_COMMANDS = %w(create delete update list)
+  SUB_COMMANDS = %w(create delete update list outputs)
 
   global_opts = Trollop::options do
     version "0.1.0"
@@ -130,7 +144,7 @@ where [options] are:
     # banner "magic file deleting and copying utility"
     opt :dry_run, "Don't actually do anything", :short => "-n"
     opt :aws_env_key, "Which environment to us if using aws shared creds", short: '-a', type: :string
-    opt :verbose, short: '-v'
+    opt :verbose
     opt :config, "Environment configuration file", type: :string # todo: replace the stuff below with this
     opt :version
     stop_on SUB_COMMANDS
@@ -148,13 +162,14 @@ Usage:
 where [options] are:
                    EOS
                    opt :stack, "Stack to be created on AWS", required: true, type: :string
-                   opt :region, "Region to deplay stack", short: '-r', type: :string
+                   opt :region, "aws region to list stacks on", short: '-r', type: :string
                    opt :cfn, "Cloud Formation Template", type: :string
                    opt :environment, "dev, qa, stage, prod", type: :string, short: '-e'
                  end
-               when "delete"  # needs to be done
+               when "outputs" # handle listing the stacks
                  Trollop::options do
-                   opt :double, "Copy twice for safety's sake"
+                   opt :region, "aws region to list stacks on", short: '-r', type: :string
+                   opt :stack, "Stack to list outputs", short: '-s', required: true, type: :string
                  end
                when 'list' # handle listing the stacks
                  Trollop::options do
@@ -169,6 +184,8 @@ where [options] are:
     list(global_opts,cmd_opts)
   elsif cmd == 'create'
     create(global_opts, cmd_opts)
+  elsif cmd == 'outputs'
+    outputs(global_opts, cmd_opts)
   end
   # puts "Global options: #{global_opts.inspect}"
   # puts "Subcommand: #{cmd.inspect}"
