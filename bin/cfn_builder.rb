@@ -29,7 +29,6 @@ main do
   specfile = YAML::load(File.open(options['input-specfile']))
   logger.info("Read in the specfile from #{options['input-specfile']}")
 
-
   ['AWSTemplateFormatVersion', 'Description'].each do |meta_data|
     unless specfile[meta_data].length == 1
       puts 'Houston we have a problem'
@@ -59,7 +58,7 @@ end
 # Pre: Directory full of 'yml' or 'yaml' files
 # Read and add to given hash
 def parse_cfn_blocks(directory, section, spec_file, cfn_hash)
-  if Dir.exists?(directory)
+  if Dir.exists?(directory) and spec_file.has_key?(section)
     cfn_hash[section] = Hash.new
     spec_file[section].each do |param|
     # Dir.glob(directory +'/*.yaml') do |yaml_file|
