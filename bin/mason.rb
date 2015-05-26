@@ -59,17 +59,39 @@ def outputs(global_opts, cmd_opts)
   end
 end
 
+def get_stack_outputs(creds, region, cfn_stack)
+
+  cfn = get_cfn(creds, region)
+  cfn_resource = Aws::CloudFormation::Resource.new(client: cfn)
+
+  stack = cfn_resource.stack(cfn_stack)
+  output_hash = Hash.new
+  stack.outputs.each do |output|
+    puts "Name #{output.output_key} and value = #{output.output_value}"
+    output_hash[output.output_key] = output.output_value
+  end
+  return output_hash
+end
+
 
 # Simple function to read in the config to a hash
 def read_config( config_file )
   return IniFile.load(config_file)
 end
 
+def get_parents(config, stackname)
+  if config[stackname].has_key?('parents')
+    parents = config[stackname]['parents'].split(',')
+  end
+
+  return parents
+end
+
 # Parse config to find all the inputs. This will read the global section.
 # Todo: parse globals.
 # todo: parse params
 # todo: validate_actual params
-def parse_params( environment, config , cfn_template)
+def parse_params( environment, config , cfn_template, region, creds, stack)
   parameters = Array.new
 
   if cfn_template.has_key?('Parameters')
@@ -79,23 +101,64 @@ def parse_params( environment, config , cfn_template)
     end
   end
 
-  count = 0
-  # config[environment].each_key do |key|
-  parameters.each do |key|
+    count = 0
     # config[environment].each_key do |key|
-    if config[environment].has_key?(key)
-      parameters[count] = Hash.new
-      parameters[count][:parameter_key] = key
-      parameters[count][:parameter_value] = config[environment][key]
-      count = count +1
-    elsif config['global'].has_key?(key)
-      parameters[count] = Hash.new
-      parameters[count][:parameter_key] = key
-      parameters[count][:parameter_value] = config['global'][key]
-      count = count +1
+    parameters.each do |key|
+      # config[environment].each_key do |key|
+      if config[environment].has_key?(key)
+        parameters[count] = Hash.new
+        parameters[count][:parameter_key] = key
+        parameters[count][:parameter_value] = config[environment][key]
+        count = count +1
+      elsif config['global'].has_key?(key)
+        parameters[count] = Hash.new
+        parameters[count][:parameter_key] = key
+        parameters[count][:parameter_value] = config['global'][key]
+        count = count +1
+      end
+    end
+    return parameters
+end
+
+def parse_all_params( environment, config , cfn_template, region, creds, stackname)
+  parameters = Hash.new
+
+  if cfn_template.has_key?('Parameters')
+    cfn_template['Parameters'].each_key do |key|
+      parameters[key] = ''
     end
   end
-  return parameters
+
+  parents = get_parents(config, stackname)
+  parents.each do |stack|
+    cfn_outputs =  get_stack_outputs(creds, region, stack)
+    parameters.each_key do |key|
+      if cfn_outputs.has_key?(key)
+        parameters[key] = cfn_outputs[key]
+      end
+    end
+
+  end
+
+  # config[environment].each_key do |key|
+  parameters.each_key do |key|
+    # config[environment].each_key do |key|
+    if config[environment].has_key?(key)
+      parameters[key]= config[environment][key]
+    elsif config['global'].has_key?(key)
+      parameters[key]= config['global'][key]
+    end
+  end
+  cfn_params = Array.new
+  count = 0
+  parameters.each do |key, value|
+    cfn_params[count] = Hash.new
+    cfn_params[count][:parameter_key] = key
+    cfn_params[count][:parameter_value] = value.to_s
+    count = count + 1
+  end
+
+  return cfn_params
 end
 
 def generate_stack_name(config, stackname)
@@ -109,10 +172,13 @@ def create(global_opts, cmd_opts)
   cloudformation = File.read(cmd_opts[:cfn])
   cfn_hash = JSON.parse(cloudformation)
   cmd_opts[:region] ? region = cmd_opts[:region] : config['global'].has_key?('region') ? region = config['global']['region'] : region = 'us-east-1'
-  global_opts[:config] ? params = parse_params(cmd_opts[:environment], config, cfn_hash) : params = Array.new
   cfn = get_cfn(creds, region)
-  # stack_name = cmd_opts[:stack]
   stack_name = generate_stack_name(config, cmd_opts[:stack])
+  global_opts[:config] ? params = parse_all_params(cmd_opts[:environment], config, cfn_hash, region, creds, stack_name) : params = Array.new
+  puts "foo"
+  puts params
+  puts "bar"
+  # stack_name = cmd_opts[:stack]
   resp = cfn.create_stack(
       # required
       stack_name: stack_name, # passed from command line.
