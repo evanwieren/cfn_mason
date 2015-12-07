@@ -130,12 +130,16 @@ def parse_all_params( environment, config , cfn_template, region, creds, stackna
   end
 
   parents = get_parents(config, stackname)
-  parents.each do |stack|
-    cfn_outputs =  get_stack_outputs(creds, region, stack)
-    parameters.each_key do |key|
-      if cfn_outputs.has_key?(key)
-        parameters[key] = cfn_outputs[key]
+  unless parents.nil?
+    parents.each do |stack|
+      puts "Gets stack output"
+      cfn_outputs =  get_stack_outputs(creds, region, stack)
+      parameters.each_key do |key|
+        if cfn_outputs.has_key?(key)
+          parameters[key] = cfn_outputs[key]
+        end
       end
+
     end
 
   end
@@ -175,9 +179,7 @@ def create(global_opts, cmd_opts)
   cfn = get_cfn(creds, region)
   stack_name = generate_stack_name(config, cmd_opts[:stack])
   global_opts[:config] ? params = parse_all_params(cmd_opts[:environment], config, cfn_hash, region, creds, stack_name) : params = Array.new
-  puts "foo"
   puts params
-  puts "bar"
   # stack_name = cmd_opts[:stack]
   resp = cfn.create_stack(
       # required
