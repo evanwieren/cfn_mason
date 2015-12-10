@@ -187,7 +187,7 @@ def create(global_opts, cmd_opts)
       template_body: cloudformation, # read this from file.
       parameters: params ,
       disable_rollback: true, # I like this.
-      timeout_in_minutes: 15,  # should bump this up to 15
+      timeout_in_minutes: 30,  # should bump this up to 15
       #notification_arns: ["NotificationARN", '...'],
       capabilities: ["CAPABILITY_IAM"], # '...'],
       #on_failure: "DO_NOTHING", #"DO_NOTHING|ROLLBACK|DELETE",
