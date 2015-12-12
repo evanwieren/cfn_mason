@@ -14,27 +14,21 @@ require 'yaml'
 require 'json'
 
 
-def get_aws_creds(global_opts)
+def set_aws_creds(global_opts)
   if global_opts[:aws_env_key]
-    my_credentials = Aws::SharedCredentials.new(profile_name: global_opts[:aws_env_key])
-  else
-    my_credentials = Aws::SharedCredentials.new(profile_name: 'default')
+    Aws.config[:credentials] = Aws::SharedCredentials.new(profile_name: global_opts[:aws_env_key])
   end
-  return my_credentials
+  # If a profile isn't specified, then just use the default search (http://docs.aws.amazon.com/sdkforruby/api/index.html#Configuration)
 end
 
-def get_cfn(credentials, region)
-  cfn = Aws::CloudFormation::Client.new(
-                                       region: region,
-                                       credentials: credentials
-  )
+def get_cfn(region)
+  cfn = Aws::CloudFormation::Client.new(region: region)
   return cfn
 end
 
 def list(global_opts, cmd_opts)
-  creds = get_aws_creds( global_opts )
   cmd_opts[:region] ? region = cmd_opts[:region] : region = 'us-east-1'
-  cfn = get_cfn(creds, region)
+  cfn = get_cfn(region)
 
   stacks = cfn.list_stacks(
       stack_status_filter: [:CREATE_IN_PROGRESS, :CREATE_FAILED, :CREATE_COMPLETE, :ROLLBACK_IN_PROGRESS, :ROLLBACK_FAILED, :ROLLBACK_COMPLETE, :DELETE_IN_PROGRESS, :DELETE_FAILED, :UPDATE_IN_PROGRESS, :UPDATE_COMPLETE_CLEANUP_IN_PROGRESS, :UPDATE_COMPLETE, :UPDATE_ROLLBACK_IN_PROGRESS, :UPDATE_ROLLBACK_FAILED, :UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS, :UPDATE_ROLLBACK_COMPLETE]
@@ -48,9 +42,8 @@ def list(global_opts, cmd_opts)
 end
 
 def outputs(global_opts, cmd_opts)
-  creds = get_aws_creds( global_opts )
   cmd_opts[:region] ? region = cmd_opts[:region] : region = 'us-east-1'
-  cfn = get_cfn(creds, region)
+  cfn = get_cfn(region)
   cfn_resource = Aws::CloudFormation::Resource.new(client: cfn)
 
   stack = cfn_resource.stack(cmd_opts[:stack])
@@ -59,9 +52,9 @@ def outputs(global_opts, cmd_opts)
   end
 end
 
-def get_stack_outputs(creds, region, cfn_stack)
+def get_stack_outputs(region, cfn_stack)
 
-  cfn = get_cfn(creds, region)
+  cfn = get_cfn(region)
   cfn_resource = Aws::CloudFormation::Resource.new(client: cfn)
 
   stack = cfn_resource.stack(cfn_stack)
@@ -91,7 +84,7 @@ end
 # Todo: parse globals.
 # todo: parse params
 # todo: validate_actual params
-def parse_params( environment, config , cfn_template, region, creds, stack)
+def parse_params( environment, config , cfn_template, region, stack)
   parameters = Array.new
 
   if cfn_template.has_key?('Parameters')
@@ -120,7 +113,7 @@ def parse_params( environment, config , cfn_template, region, creds, stack)
     return parameters
 end
 
-def parse_all_params( environment, config , cfn_template, region, creds, stackname)
+def parse_all_params( environment, config , cfn_template, region, stackname)
   parameters = Hash.new
 
   if cfn_template.has_key?('Parameters')
@@ -133,7 +126,7 @@ def parse_all_params( environment, config , cfn_template, region, creds, stackna
   unless parents.nil?
     parents.each do |stack|
       puts "Gets stack output"
-      cfn_outputs =  get_stack_outputs(creds, region, stack)
+      cfn_outputs =  get_stack_outputs(region, stack)
       parameters.each_key do |key|
         if cfn_outputs.has_key?(key)
           parameters[key] = cfn_outputs[key]
@@ -177,9 +170,9 @@ def create_or_update(function, global_opts, cmd_opts)
   cloudformation = File.read(cmd_opts[:cfn])
   cfn_hash = JSON.parse(cloudformation)
   cmd_opts[:region] ? region = cmd_opts[:region] : config['global'].has_key?('region') ? region = config['global']['region'] : region = 'us-east-1'
-  cfn = get_cfn(creds, region)
+  cfn = get_cfn(region)
   stack_name = generate_stack_name(config, cmd_opts[:stack])
-  global_opts[:config] ? params = parse_all_params(cmd_opts[:environment], config, cfn_hash, region, creds, stack_name) : params = Array.new
+  global_opts[:config] ? params = parse_all_params(cmd_opts[:environment], config, cfn_hash, region, stack_name) : params = Array.new
   puts params
   # stack_name = cmd_opts[:stack]
   case function
@@ -278,6 +271,7 @@ where [options] are:
                  Trollop::die "unknown subcommand #{cmd.inspect}"
              end
 
+  set_aws_creds(global_opts);
   if cmd == 'list'
     list(global_opts,cmd_opts)
   elsif cmd == 'create' or cmd == 'update'
