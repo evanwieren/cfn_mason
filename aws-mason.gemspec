@@ -1,6 +1,10 @@
-Gem::Specification.new do |s|
+# coding: utf-8
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+  Gem::Specification.new do |s|
   s.name        = 'aws-mason'
-  s.version     = '0.0.0'
+  s.version     = '0.0.2'
   s.date        = '2015-12-11'
   s.summary     = "A tool for simplifying working on AWS Cloudformation Stacks."
   s.description = "aws-mason is a tool that will allow you to create easily usable stacks within AWS. It breaks stacks into
