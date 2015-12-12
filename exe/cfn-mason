@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'cfn/mason'
+puts Cfn::Mason.hi
+# puts AWS_Mason.hi(ARGV[0])

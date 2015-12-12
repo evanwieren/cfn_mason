@@ -1,9 +1,0 @@
----
-ec2Private1SubnetNetworkAclAssocAZ2:
-  Type: AWS::EC2::SubnetNetworkAclAssociation
-  Condition: Private1AZ2
-  Properties:
-    SubnetId:
-      Ref: ec2Private1SubnetAZ2
-    NetworkAclId:
-      Ref: ec2Private1SubnetNetworkAcl

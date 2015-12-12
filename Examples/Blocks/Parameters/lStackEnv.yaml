@@ -1,8 +1,0 @@
----
-lStackEnv:
-  Type: String
-  Default: stage
-  Description: Environment name; prod, stage, dev, etc. (For tagging, use lowercase,
-    no spaces, dashes ok.)
-  AllowedPattern: "[-a-z0-9]*"
-  ConstraintDescription: Must be lowercase, no spaces, dashes ok.

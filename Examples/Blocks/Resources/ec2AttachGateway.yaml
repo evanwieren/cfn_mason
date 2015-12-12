@@ -1,8 +1,0 @@
----
-ec2AttachGateway:
-  Type: AWS::EC2::VPCGatewayAttachment
-  Properties:
-    VpcId:
-      Ref: ec2VPC
-    InternetGatewayId:
-      Ref: ec2InternetGW

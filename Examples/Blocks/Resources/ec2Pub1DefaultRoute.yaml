@@ -1,9 +1,0 @@
----
-ec2Pub1DefaultRoute:
-  Type: AWS::EC2::Route
-  Properties:
-    RouteTableId:
-      Ref: ec2Public1RouteTable
-    DestinationCidrBlock: 0.0.0.0/0
-    GatewayId:
-      Ref: ec2InternetGW

@@ -1,9 +1,0 @@
----
-ec2Private2SubnetRouteTableAssocAZ2:
-  Type: AWS::EC2::SubnetRouteTableAssociation
-  Condition: Private2AZ2
-  Properties:
-    SubnetId:
-      Ref: ec2Private2SubnetAZ2
-    RouteTableId:
-      Ref: ec2Private2RouteTable
