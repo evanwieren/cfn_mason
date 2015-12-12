@@ -14,27 +14,21 @@ require 'yaml'
 require 'json'
 
 
-def get_aws_creds(global_opts)
+def set_aws_creds(global_opts)
   if global_opts[:aws_env_key]
-    my_credentials = Aws::SharedCredentials.new(profile_name: global_opts[:aws_env_key])
-  else
-    my_credentials = Aws::SharedCredentials.new(profile_name: 'default')
+    Aws.config[:credentials] = Aws::SharedCredentials.new(profile_name: global_opts[:aws_env_key])
   end
-  return my_credentials
+  # If a profile isn't specified, then just use the default search (http://docs.aws.amazon.com/sdkforruby/api/index.html#Configuration)
 end
 
-def get_cfn(credentials, region)
-  cfn = Aws::CloudFormation::Client.new(
-                                       region: region,
-                                       credentials: credentials
-  )
+def get_cfn(region)
+  cfn = Aws::CloudFormation::Client.new(region: region)
   return cfn
 end
 
 def list(global_opts, cmd_opts)
-  creds = get_aws_creds( global_opts )
   cmd_opts[:region] ? region = cmd_opts[:region] : region = 'us-east-1'
-  cfn = get_cfn(creds, region)
+  cfn = get_cfn(region)
 
   stacks = cfn.list_stacks(
       stack_status_filter: [:CREATE_IN_PROGRESS, :CREATE_FAILED, :CREATE_COMPLETE, :ROLLBACK_IN_PROGRESS, :ROLLBACK_FAILED, :ROLLBACK_COMPLETE, :DELETE_IN_PROGRESS, :DELETE_FAILED, :UPDATE_IN_PROGRESS, :UPDATE_COMPLETE_CLEANUP_IN_PROGRESS, :UPDATE_COMPLETE, :UPDATE_ROLLBACK_IN_PROGRESS, :UPDATE_ROLLBACK_FAILED, :UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS, :UPDATE_ROLLBACK_COMPLETE]
@@ -48,9 +42,8 @@ def list(global_opts, cmd_opts)
 end
 
 def outputs(global_opts, cmd_opts)
-  creds = get_aws_creds( global_opts )
   cmd_opts[:region] ? region = cmd_opts[:region] : region = 'us-east-1'
-  cfn = get_cfn(creds, region)
+  cfn = get_cfn(region)
   cfn_resource = Aws::CloudFormation::Resource.new(client: cfn)
 
   stack = cfn_resource.stack(cmd_opts[:stack])
@@ -59,9 +52,9 @@ def outputs(global_opts, cmd_opts)
   end
 end
 
-def get_stack_outputs(creds, region, cfn_stack)
+def get_stack_outputs(region, cfn_stack)
 
-  cfn = get_cfn(creds, region)
+  cfn = get_cfn(region)
   cfn_resource = Aws::CloudFormation::Resource.new(client: cfn)
 
   stack = cfn_resource.stack(cfn_stack)
@@ -91,7 +84,7 @@ end
 # Todo: parse globals.
 # todo: parse params
 # todo: validate_actual params
-def parse_params( environment, config , cfn_template, region, creds, stack)
+def parse_params( environment, config , cfn_template, region, stack)
   parameters = Array.new
 
   if cfn_template.has_key?('Parameters')
@@ -120,7 +113,7 @@ def parse_params( environment, config , cfn_template, region, creds, stack)
     return parameters
 end
 
-def parse_all_params( environment, config , cfn_template, region, creds, stackname)
+def parse_all_params( environment, config , cfn_template, region, stackname)
   parameters = Hash.new
 
   if cfn_template.has_key?('Parameters')
@@ -133,7 +126,7 @@ def parse_all_params( environment, config , cfn_template, region, creds, stackna
   unless parents.nil?
     parents.each do |stack|
       puts "Gets stack output"
-      cfn_outputs =  get_stack_outputs(creds, region, stack)
+      cfn_outputs =  get_stack_outputs(region, stack)
       parameters.each_key do |key|
         if cfn_outputs.has_key?(key)
           parameters[key] = cfn_outputs[key]
@@ -159,6 +152,7 @@ def parse_all_params( environment, config , cfn_template, region, creds, stackna
     cfn_params[count] = Hash.new
     cfn_params[count][:parameter_key] = key
     cfn_params[count][:parameter_value] = value.to_s
+    cfn_params[count][:use_previous_value] = false
     count = count + 1
   end
 
@@ -170,37 +164,60 @@ def generate_stack_name(config, stackname)
   return stackname
 end
 
-def create(global_opts, cmd_opts)
+def create_or_update(function, global_opts, cmd_opts)
   creds = get_aws_creds( global_opts )
   config = read_config(global_opts[:config])
   cloudformation = File.read(cmd_opts[:cfn])
   cfn_hash = JSON.parse(cloudformation)
   cmd_opts[:region] ? region = cmd_opts[:region] : config['global'].has_key?('region') ? region = config['global']['region'] : region = 'us-east-1'
-  cfn = get_cfn(creds, region)
+  cfn = get_cfn(region)
   stack_name = generate_stack_name(config, cmd_opts[:stack])
-  global_opts[:config] ? params = parse_all_params(cmd_opts[:environment], config, cfn_hash, region, creds, stack_name) : params = Array.new
+  global_opts[:config] ? params = parse_all_params(cmd_opts[:environment], config, cfn_hash, region, stack_name) : params = Array.new
   puts params
   # stack_name = cmd_opts[:stack]
-  resp = cfn.create_stack(
-      # required
-      stack_name: stack_name, # passed from command line.
-      template_body: cloudformation, # read this from file.
-      parameters: params ,
-      disable_rollback: true, # I like this.
-      timeout_in_minutes: 30,  # should bump this up to 15
-      #notification_arns: ["NotificationARN", '...'],
-      capabilities: ["CAPABILITY_IAM"], # '...'],
-      #on_failure: "DO_NOTHING", #"DO_NOTHING|ROLLBACK|DELETE",
-      # stack_policy_body: "StackPolicyBody",
-      # stack_policy_url: "StackPolicyURL",
-      # tags: [
-      #     {
-      #         key: "TagKey",
-      #         value: "TagValue",
-      #     },
-      # ],
-  )
-  puts "Create all the things."
+  case function
+  when 'create'
+    cfn.create_stack(
+        # required
+        stack_name: stack_name, # passed from command line.
+        template_body: cloudformation, # read this from file.
+        parameters: params ,
+        disable_rollback: true, # I like this.
+        timeout_in_minutes: 30,  # should bump this up to 15
+        #notification_arns: ["NotificationARN", '...'],
+        capabilities: ["CAPABILITY_IAM"], # '...'],
+        #on_failure: "DO_NOTHING", #"DO_NOTHING|ROLLBACK|DELETE",
+        # stack_policy_body: "StackPolicyBody",
+        # stack_policy_url: "StackPolicyURL",
+        # tags: [
+        #     {
+        #         key: "TagKey",
+        #         value: "TagValue",
+        #     },
+        # ],
+    )
+    puts "Create all the things."
+  when 'update'
+    cfn.update_stack(
+        # required
+        stack_name: stack_name, # passed from command line.
+        template_body: cloudformation, # read this from file.
+        parameters: params ,
+        use_previous_template: false,
+        #notification_arns: ["NotificationARN", '...'],
+        capabilities: ["CAPABILITY_IAM"], # '...'],
+        #on_failure: "DO_NOTHING", #"DO_NOTHING|ROLLBACK|DELETE",
+        # stack_policy_body: "StackPolicyBody",
+        # stack_policy_url: "StackPolicyURL",
+        # tags: [
+        #     {
+        #         key: "TagKey",
+        #         value: "TagValue",
+        #     },
+        # ],
+    )
+    puts "Update all the things."
+  end
 end
 
 if __FILE__ == $0
@@ -226,16 +243,16 @@ where [options] are:
 
   cmd = ARGV.shift # get the subcommand
   cmd_opts = case cmd
-               when "create" # parse delete options
+               when /^(create|update)$/ # parse delete options
                  Trollop::options do
                    banner <<-EOS
-cfnmason create will create new cloudformation stacks
+cfnmason #{$1} will #{$1} cloudformation stacks
 
 Usage:
-     cfnmason create -c environment_config -s stack_name
+     cfnmason #{$1} -c environment_config -s stack_name
 where [options] are:
                    EOS
-                   opt :stack, "Stack to be created on AWS", required: true, type: :string
+                   opt :stack, "Stack to be #{$1}d on AWS", required: true, type: :string
                    opt :region, "aws region to list stacks on", short: '-r', type: :string
                    opt :cfn, "Cloud Formation Template", type: :string
                    opt :environment, "dev, qa, stage, prod", type: :string, short: '-e'
@@ -254,10 +271,11 @@ where [options] are:
                  Trollop::die "unknown subcommand #{cmd.inspect}"
              end
 
+  set_aws_creds(global_opts);
   if cmd == 'list'
     list(global_opts,cmd_opts)
-  elsif cmd == 'create'
-    create(global_opts, cmd_opts)
+  elsif cmd == 'create' or cmd == 'update'
+    create_or_update(cmd, global_opts, cmd_opts)
   elsif cmd == 'outputs'
     outputs(global_opts, cmd_opts)
   end
