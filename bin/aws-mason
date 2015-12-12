@@ -1,5 +1,0 @@
-#!/usr/bin/env ruby
-
-require 'aws-mason'
-puts AWS_Mason.hi
-# puts AWS_Mason.hi(ARGV[0])
