@@ -1,8 +1,0 @@
----
-ec2Public1SubnetRouteTableAssocAZ1:
-  Type: AWS::EC2::SubnetRouteTableAssociation
-  Properties:
-    SubnetId:
-      Ref: ec2Public1SubnetAZ1
-    RouteTableId:
-      Ref: ec2Public1RouteTable

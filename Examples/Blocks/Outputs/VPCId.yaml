@@ -1,5 +1,0 @@
----
-VPCId:
-  Description: VPC Id
-  Value:
-    Ref: ec2VPC
