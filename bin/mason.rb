@@ -165,7 +165,8 @@ def generate_stack_name(config, stackname)
 end
 
 def create_or_update(function, global_opts, cmd_opts)
-  creds = get_aws_creds( global_opts )
+  creds = set_aws_creds( global_opts )
+  set_aws_creds( global_opts )
   config = read_config(global_opts[:config])
   cloudformation = File.read(cmd_opts[:cfn])
   cfn_hash = JSON.parse(cloudformation)
@@ -174,6 +175,10 @@ def create_or_update(function, global_opts, cmd_opts)
   stack_name = generate_stack_name(config, cmd_opts[:stack])
   global_opts[:config] ? params = parse_all_params(cmd_opts[:environment], config, cfn_hash, region, stack_name) : params = Array.new
   puts params
+  if cmd_opts[:dry_run]
+    return
+  end
+
   # stack_name = cmd_opts[:stack]
   case function
   when 'create'
@@ -256,6 +261,7 @@ where [options] are:
                    opt :region, "aws region to list stacks on", short: '-r', type: :string
                    opt :cfn, "Cloud Formation Template", type: :string
                    opt :environment, "dev, qa, stage, prod", type: :string, short: '-e'
+                   opt :dry_run, "just output variables before run", type: :boolean, short: '-n'
                  end
                when "outputs" # handle listing the stacks
                  Trollop::options do
