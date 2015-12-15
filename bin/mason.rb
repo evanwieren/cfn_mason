@@ -84,6 +84,7 @@ end
 # Todo: parse globals.
 # todo: parse params
 # todo: validate_actual params
+# SHAZBOT why is this here. Nothing calls it.
 def parse_params( environment, config , cfn_template, region, stack)
   parameters = Array.new
 
@@ -98,7 +99,12 @@ def parse_params( environment, config , cfn_template, region, stack)
     # config[environment].each_key do |key|
     parameters.each do |key|
       # config[environment].each_key do |key|
-      if config[environment].has_key?(key)
+      if config[stack].has_key?(key)
+        parameters[count] = Hash.new
+        parameters[count][:parameter_key] = key
+        parameters[count][:parameter_value] = config[stack][key]
+        count = count +1
+      elsif config[environment].has_key?(key)
         parameters[count] = Hash.new
         parameters[count][:parameter_key] = key
         parameters[count][:parameter_value] = config[environment][key]
@@ -140,7 +146,9 @@ def parse_all_params( environment, config , cfn_template, region, stackname)
   # config[environment].each_key do |key|
   parameters.each_key do |key|
     # config[environment].each_key do |key|
-    if config[environment].has_key?(key)
+    if config[stackname].has_key?(key)
+      parameters[key]= config[stackname][key]
+    elsif config[environment].has_key?(key)
       parameters[key]= config[environment][key]
     elsif config['global'].has_key?(key)
       parameters[key]= config['global'][key]
