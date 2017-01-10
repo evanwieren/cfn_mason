@@ -9,7 +9,7 @@ require 'logger'
 include Methadone::Main
 include Methadone::CLILogging
 
-logger = Logger.new(STDOUT)
+@logger = Logger.new(STDOUT)
 
 #TODO: Need to add commandline ars and such. All to be done later.
 # For now, just need it to work so can make it past the hump
@@ -17,9 +17,9 @@ logger = Logger.new(STDOUT)
 main do
 
   if options[:verbose]
-    logger.level = Logger::DEBUG
+    @logger.level = Logger::DEBUG
   else
-    logger.level = Logger::WARN
+    @logger.level = Logger::WARN
   end
 
   # Create a hash to hold all of the data as we build the CFN
@@ -27,7 +27,7 @@ main do
   output_cfn = Hash.new
 
   specfile = YAML::load(File.open(options['input-specfile']))
-  logger.info("Read in the specfile from #{options['input-specfile']}")
+  @logger.info("Read in the specfile from #{options['input-specfile']}")
 
   ['AWSTemplateFormatVersion', 'Description'].each do |meta_data|
     unless specfile[meta_data].length == 1
@@ -37,12 +37,15 @@ main do
     cfn[meta_data] = specfile[meta_data][0]
   end
 
+  @logger.debug("Starting to handle each section of specfile")
   ['Parameters', 'Mappings', 'Conditions', 'Resources', 'Outputs'].each do |section|
+    @logger.debug("Processing the #{section} section")
 
     parse_cfn_blocks(options['blocks-dir'] + "/#{section}", section, specfile, cfn)
 
   end
 
+  @logger.debug("Preparing to dump JSON to file")
   results = JSON.dump(cfn)
 
   if options['output-file']
@@ -63,6 +66,7 @@ def parse_cfn_blocks(directory, section, spec_file, cfn_hash)
     spec_file[section].each do |param|
     # Dir.glob(directory +'/*.yaml') do |yaml_file|
       # do work on files ending in .rb in the desired directory
+      @logger.debug("Loading #{param}.yaml file to parse")
       item = YAML::load(File.open(directory + "/#{param}.yaml"))
       item.each_key do |key|
         cfn_hash[section][key] = Hash.new
