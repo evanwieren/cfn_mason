@@ -5,7 +5,7 @@ require 'cfn/mason/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "cfn-mason"
-  spec.version       = Cfn::Mason::VERSION
+  spec.version       = CFN-Mason::VERSION
   spec.authors       = ["Eric VanWieren"]
   spec.email         = ["evanwieren@notgmail.com"]
 
