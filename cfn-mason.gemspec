@@ -1,16 +1,16 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'cfn/mason/version'
+require 'cfnmason/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "cfn-mason"
-  spec.version       = CFN-Mason::VERSION
+  spec.version       = CfnMason::VERSION
   spec.authors       = ["Eric VanWieren"]
   spec.email         = ["evanwieren@notgmail.com"]
 
-  spec.summary       = %q{AWS Cloud Formation Wrapping Tool}
-  spec.description   = %q{A longer explanation will go here.}
+  spec.summary       = %q{AWS Cloud Formation Utility Tool}
+  spec.description   = %q{The goal is to provide a way to easily build CloudFormation templates using ruby. Then using aws-sdk gem, be able to push and follow status of CloudFormation templates.}
   spec.homepage      = "https://github.com/evanwieren/cfn_mason"
   spec.license       = "MIT"
 
