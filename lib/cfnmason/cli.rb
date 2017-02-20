@@ -1,4 +1,5 @@
 require 'thor'
+require 'cfnmason/hello'
 
 module CfnMason
 
@@ -22,6 +23,8 @@ module CfnMason
       greeting.upcase! if options[:upcase]
       puts greeting
     end
+    desc "hn COMMANDS", "Hacker News Control Module"
+    subcommand "hn", CfnMason::Hn
   end
 
 end
