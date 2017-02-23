@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'cfn/mason'
+require 'cfnma/mason'
 
 Cfn::Mason::HammerOfTheGods.start( ARGV )
