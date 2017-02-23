@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'cfnmason/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "cfn-mason"
+  spec.name          = "cfnmason"
   spec.version       = CfnMason::VERSION
   spec.authors       = ["Eric VanWieren"]
   spec.email         = ["evanwieren@notgmail.com"]
@@ -23,7 +23,8 @@ Gem::Specification.new do |spec|
   end
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
-  spec.bindir        = "exe"
+  # Not sure if we need this line or not.
+  # spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
