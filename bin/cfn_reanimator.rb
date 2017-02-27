@@ -4,7 +4,7 @@ require 'aws-sdk'
 require 'yaml'
 require 'json'
 require 'methadone'
-require 'FileUtils'
+require 'fileutils'
 require 'logger'
 
 include Methadone::Main

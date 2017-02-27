@@ -3,7 +3,7 @@
 require 'yaml'
 require 'json'
 require 'methadone'
-require 'FileUtils'
+require 'fileutils'
 require 'logger'
 require 'erb'
 
